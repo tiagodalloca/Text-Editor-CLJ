@@ -8,3 +8,4 @@
                    [[org.clojure/tools.namespace "0.2.10"]
                     [org.clojure/test.check "0.9.0"]]}
              :uberjar {:aot :all}})
+

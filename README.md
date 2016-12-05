@@ -1,36 +1,10 @@
-# Editor_Texto-CLJ
+# Text Editor -CLJ
 
-FIXME: description
-
-## Installation
-
-Download from http://example.com/FIXME.
-
-## Usage
-
-FIXME: explanation
-
-    $ java -jar Editor_Texto-CLJ-0.1.0-standalone.jar [args]
-
-## Options
-
-FIXME: listing of options this app accepts.
-
-## Examples
-
-...
-
-### Bugs
-
-...
-
-### Any Other Sections
-### That You Think
-### Might be Useful
+This is a text editor concept that I'm rewriting in Clojure from my C++ text editor (Editor_Texto-TOO)
 
 ## License
 
-Copyright © 2016 FIXME
+Copyright © 2016 MrDallOca
 
-Distributed under the Eclipse Public License either version 1.0 or (at
-your option) any later version.
+
+_Distributed under the Shit Private License v1.0_
