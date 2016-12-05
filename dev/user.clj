@@ -2,6 +2,7 @@
 
 (require '[editor-clj.main :as main]
          '[editor-clj.core :as core]
+         '[editor-clj.structures :as strs]
          
          '[clojure.java.io :as io]
          '[clojure.string :as str]

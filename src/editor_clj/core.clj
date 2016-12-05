@@ -1,71 +1,92 @@
-(ns editor-clj.core)
+(ns editor-clj.core
+  (:require [editor-clj.structures :refer :all]))
 
-(defn str-insert
-  "Insert c in string s at index i."
-  [s c i]
-  (str (subs s 0 i) c (subs s i)))
+(def curr-ln (atom nil))
+(def curr-coln (atom 0))
 
-(defn str-replace
-  "Replaces a char at the index i of s for c"
-  [s c i]
-  (str (subs s 0 i) c (subs s (inc i) (.length s))))
+(defn start-writing
+  "Configurates the global vars to write"
+  []
+  (do (reset! curr-ln (line "" nil nil))
+      (reset! curr-coln 0)))
 
-(defn line
-  "Returns a atom containing map representing a line"
-  [s previous-line next-line]
-  (atom {:content s 
-         :next next-line
-         :prev previous-line}))
+(defn breakline
+  "Breaks the curr(ent) line in the curr(ent) coln"
+  []
+  (let [ln @curr-ln]
+    (breakline-at ln @curr-coln)
+    (reset! curr-ln (ln-next ln))))
 
-(defn ln-next
-  ([ln]
-   (:next @ln)) 
-  ([ln nln]
-   (reset! (ln-next ln) nln)))
+(defn insert-char
+  "Inserts a char at the curr(ent) position"
+  [c]
+  (ln-insert-char @curr-ln c))
 
-(defn ln-prev
-  ([ln]
-   (:prev @ln))
-  ([ln nln]
-   (reset! (ln-prev ln) nln)))
+(defn replace-char
+  "Replaces a char at the curr(ent) position by a give char c"
+  [c]
+  (ln-replace-char @curr-ln c @curr-coln))
 
-(defn ln-content
-  ([ln]
-   (:content @ln))
-  ([ln f & args]
-   (apply swap! (into [ln] args))))
+(defn backspace
+  "Does exactly what you'd expect backspace to do"
+  []
+  (let [coln @curr-coln]
+    (when (> coln 0) ;; > 0
+      (ln-delete-char @curr-ln (dec coln)))))
 
-(defn ln-insert-char
-  "Inserts c into the line :content at the index i"
-  [ln c i] 
-  (swap! ln update :content #(str-insert % i c)))
+(defn delete
+  "Deletes the char at the curr(ent) position"
+  []
+  (ln-delete-char @curr-ln @curr-coln)) ;; needs some verifications
 
-(defn ln-replace-char
-  "Replaces a char at the index i of line for c"
-  [ln c i]
-  (swap! update ln :content #(str-replace % i c)))
+(defn forward
+  "Moves backward"
+  [] 
+  (let [nln (ln-next @curr-ln)
+        coln @curr-coln]
+    (when nln
+      (do (reset! curr-ln nln)
+          (reset! curr-coln
+                  (let [nln-s (.length nln)]
+                    (if (< coln nln-s)
+                      coln nln-s)))))))
 
-(defn append-line
-  "Updates :next field from line"
-  [ln nln]
-  (swap! update ln :next nln))
+(defn backward
+  "Moves backward"
+  [] 
+  (let [pln (ln-prev @curr-ln)
+        coln @curr-coln]
+    (when pln
+      (do (reset! curr-ln pln)
+          (reset! curr-coln
+                  (let [pln-s (.length pln)]
+                    (if (< coln pln-s)
+                      coln pln-s)))))))
 
-(defn append-line-before
-  "Updates :prev field from line"
-  [ln nln]
-  (swap! update ln :prev nln))
+(defn leftward
+  "Moves leftward"
+  []
+  (let [coln @curr-coln
+        ln   @curr-ln
+        ln-s (.length (ln-content ln))]
+    (if (< coln ln-s)
+      (swap! curr-coln inc)
+      (when-let [nln (ln-next ln)]
+        (do (reset! curr-ln nln)
+            (reset! curr-coln 0))))))
 
-(defn breakline-at
-  "Breaks the line at index i and updates :next"
-  [ln i]
-  (let [n-str (subs (ln-content ln) 0 i)
-        b-str (subs (ln-content ln) i)
-        old-nln (ln-next ln)
-
-        ln-c (transient @ln)]
-    (do (assoc! ln-c :content n-str)
-        (assoc! ln-c :next (line b-str ln old-nln))
-        (reset! ln (persistent! ln-c))
-        ln)))
+(defn righthward
+  "Moves righthward"
+  []
+  (let [coln @curr-coln
+        ln   @curr-ln]
+    (if (> coln 0)
+      (swap! curr-coln dec)
+      (when-let [pln (ln-prev ln)]
+        (do (reset! curr-ln pln)
+            (reset! curr-coln
+                    (-> (ln-content pln)
+                        (.length)
+                        (dec))))))))
 
 
