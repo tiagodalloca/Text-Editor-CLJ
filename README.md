@@ -7,4 +7,4 @@ This is a text editor concept that I'm rewriting in Clojure from my C++ text edi
 Copyright © 2016 MrDallOca
 
 
-_Distributed under the Shit Private License v1.0_
+_Distributed under the MIT License_
