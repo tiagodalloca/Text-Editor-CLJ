@@ -2,13 +2,20 @@
   (:require [editor-clj.structures :refer :all]))
 
 (def curr-ln (atom nil))
-(def curr-coln (atom 0))
+(def curr-coln (atom nil))
+(def insert-mode (atom nil))
 
 (defn start-writing
   "Configurates the global vars to write"
   []
   (do (reset! curr-ln (line "" nil nil))
-      (reset! curr-coln 0)))
+      (reset! curr-coln 0)
+      (reset! insert-mode true)))
+
+(defn toggle-insert
+  "Toggles insert-mode"
+  []
+  (swap! insert-mode not))
 
 (defn breakline
   "Breaks the curr(ent) line in the curr(ent) coln"
@@ -20,27 +27,40 @@
 (defn insert-char
   "Inserts a char at the curr(ent) position"
   [c]
-  (ln-insert-char @curr-ln c))
-
-(defn replace-char
-  "Replaces a char at the curr(ent) position by a give char c"
-  [c]
-  (ln-replace-char @curr-ln c @curr-coln))
+  (let [ln @curr-ln
+        coln @curr-coln
+        ln-s (.length (ln-content ln))]
+    (do ((if (and (not (toggle-insert))
+                  (< coln ln-s))
+           ln-replace-char
+           ln-insert-char)
+         ln @curr-coln c)
+        (swap! curr-coln inc))))
 
 (defn backspace
   "Does exactly what you'd expect backspace to do"
   []
   (let [coln @curr-coln]
-    (when (> coln 0) ;; > 0
-      (ln-delete-char @curr-ln (dec coln)))))
+    (if (> coln 0)
+      (ln-delete-char @curr-ln (dec coln))
+      (let [ln @curr-ln
+            pln (ln-prev ln)]
+        (when pln
+          (merge-lines pln ln))))))
 
 (defn delete
   "Deletes the char at the curr(ent) position"
   []
-  (ln-delete-char @curr-ln @curr-coln)) ;; needs some verifications
+  (let [coln @curr-coln
+        ln @curr-ln] 
+    (if (and (> coln 0)
+             (> (.length ln) 0))
+      (ln-delete-char ln coln)
+      (when (ln-next ln)
+        (merge-lines ln)))))
 
 (defn forward
-  "Moves backward"
+  "Moves forward"
   [] 
   (let [nln (ln-next @curr-ln)
         coln @curr-coln]
@@ -63,8 +83,8 @@
                     (if (< coln pln-s)
                       coln pln-s)))))))
 
-(defn leftward
-  "Moves leftward"
+(defn righthward
+  "Moves righthward"
   []
   (let [coln @curr-coln
         ln   @curr-ln
@@ -75,8 +95,8 @@
         (do (reset! curr-ln nln)
             (reset! curr-coln 0))))))
 
-(defn righthward
-  "Moves righthward"
+(defn leftward
+  "Moves leftward"
   []
   (let [coln @curr-coln
         ln   @curr-ln]

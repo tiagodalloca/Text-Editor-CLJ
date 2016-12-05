@@ -66,6 +66,22 @@
   [ln nln]
   (swap! update ln :prev nln))
 
+(defn merge-lines
+  "Concats the ln's :content with oln's and sets ln's :next to 
+  oln's"
+  ([ln oln] 
+   (let [tln (transient @ln)
+         oln @oln
+         s1 (:content tln)
+         s2 (:content oln)
+         st (str s1 s2)]   
+     (do (assoc! tln :content st)
+         (assoc! tln :next (:next oln))
+         (reset! ln (persistent! tln))
+         ln)))
+  ([ln]
+   (merge-lines ln (ln-next ln))))
+
 (defn breakline-at
   "Breaks the line at index i and updates :next"
   [ln i]
