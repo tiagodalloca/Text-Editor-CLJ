@@ -1,5 +1,5 @@
 (defproject editor-clj "0.1.0-SNAPSHOT"
-  :description "O Editor de texto feito para TOO em Clojure"
+  :description "A simple text editor written in Clojure"
   :dependencies [[org.clojure/clojure "1.9.0-alpha14"]]
   :main ^:skip-aot editor-clj.main
   :target-path "target/%s"
