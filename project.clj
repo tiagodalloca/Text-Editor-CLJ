@@ -1,6 +1,7 @@
 (defproject editor-clj "0.1.0-SNAPSHOT"
   :description "A simple text editor written in Clojure"
-  :dependencies [[org.clojure/clojure "1.9.0-alpha14"]]
+  :dependencies [[org.clojure/clojure "1.9.0-alpha14"]
+                 [jline/jline "2.14.2"]]
   :main ^:skip-aot editor-clj.main
   :target-path "target/%s"
   :profiles {:dev {:source-paths ["dev"]
