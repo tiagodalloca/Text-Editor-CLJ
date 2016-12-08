@@ -70,25 +70,30 @@
 (defn resolve-keystroke
   "Resolves a keystroke based on a hash-map of bindings if finded.
   If not, default-fn will be evaluated" 
-  [hash reader default-fn]
-  (flush) 
-  (let [the-one (loop [code (.readCharacter reader)
-                       candidates (find-candidates hash code)]
-                  (if (> (count candidates)
-                         1) 
-                    (let [code (.readCharacter reader)
-                          candidates (find-candidates candidates code)]
-                      (recur code candidates))
-                    candidates))]
-    (if (not (empty? the-one))
-      ((first (vals the-one)))
-      (default-fn))))
+  ([hash reader default-fn]
+   (flush) 
+   (let [the-one (loop [code (.readCharacter reader)
+                        candidates (find-candidates hash code)]
+                   (if (> (count candidates)
+                          1) 
+                     (let [code (.readCharacter reader)
+                           candidates (find-candidates candidates code)]
+                       (recur code candidates))
+                     candidates))]
+     (if (not (empty? the-one))
+       ((first (vals the-one)))
+       (default-fn))))
+  ([hash reader]
+   (resolve-keystroke (dissoc hash :default-function)
+                      reader
+                      (:default-function hash))))
 
 (defn find-keystroke
   "Finds (but doesn't execute) a binding based on a hash-map of bindings
   and a sequence of keystrokes (seq of key codes)"
   [hash keys] 
-  (let [ret (loop [code (first keys)
+  (let [hash (dissoc hash :default-function)
+        ret (loop [code (first keys)
                    keys (drop 1 keys)
                    candidates (find-candidates hash code)]
               (if (or (> (count candidates) 1)
@@ -100,7 +105,4 @@
                 candidates))]
     (when (not (empty? ret))
       (first (vals ret)))))
-
-
-
 

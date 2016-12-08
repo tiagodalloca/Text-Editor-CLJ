@@ -1,16 +1,29 @@
 (ns editor-clj.core
-  (:require [editor-clj.structures :refer :all]))
+  (:require [editor-clj.structures :refer :all]
+            [editor-clj.key-resolver :as kr])
+  (:import [jline.console ConsoleReader]))
 
 (def curr-ln (atom nil))
 (def curr-coln (atom nil))
 (def insert-mode (atom nil))
 
+(def keys-map (atom {:default-function #(do nil)}))
+
+(defn set-default-function!
+  [f]
+  (swap! keys-map assoc :default-function f))
+
+(defmacro map-keys!
+  [& binding-form]
+  `(->> (kr/map-bindings ~@binding-form)
+        (apply swap! keys-map merge)))
+
 (defn start-writing
   "Configurates the global vars to write"
   []
-  (do (reset! curr-ln (line "" nil nil))
-      (reset! curr-coln 0)
-      (reset! insert-mode true)))
+  (reset! curr-ln (line "" nil nil))
+  (reset! curr-coln 0)
+  (reset! insert-mode true))
 
 (defn toggle-insert
   "Toggles insert-mode"
@@ -109,4 +122,7 @@
                         (.length)
                         (dec))))))))
 
-
+(defn resolve-keys
+  "Wrapper function for resolve-keystroke, from key_resolver"
+  [^ConsoleReader reader]
+  (kr/resolve-keystroke keys-map reader ))
