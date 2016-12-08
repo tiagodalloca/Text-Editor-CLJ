@@ -26,13 +26,17 @@
                      \0 \9)
       (into ctrl-keys)))
 
+(defn convert-keys
+  "Converts the string key based on avaiable-keys"
+  [keystrokes]
+  (for [key (str/split keystrokes #" ")]
+    (get avaiable-keys key)))
+
 (defn create-binding
   "Creates a vector representing a keybinding which can be resolved later.
   It takes a string binding and a impure f(unction)."
   [binding f]
-  [(->> (str/split binding #" ")
-        (map #(get avaiable-keys %))),
-   f])
+  [(convert-keys binding) f])
 
 
 (defn append-binding
@@ -41,6 +45,19 @@
   (let [new-binding (create-binding binding f)
         [k v] new-binding]
     (assoc hash k v)))
+
+(defmacro form-func
+  "Transforms a form to a function"
+  [form]
+  `(fn [] ~form))
+
+(defmacro map-bindings
+  [& binding-form]
+  (let [binding-form (partition 2  binding-form)]
+    `(reduce (fn [acc# [binding# form#]] 
+               (append-binding acc#  binding#
+                               (form-func (eval form#))))
+             {} '~binding-form)))
 
 (defn find-candidates
   "Finds candidates"
@@ -83,4 +100,7 @@
                 candidates))]
     (when (not (empty? ret))
       (first (vals ret)))))
+
+
+
 
