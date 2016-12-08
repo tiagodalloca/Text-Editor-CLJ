@@ -28,7 +28,7 @@
 
 (defn create-binding
   "Creates a vector representing a keybinding which can be resolved later.
-  It takes a string binding and a impure f(unction)"
+  It takes a string binding and a impure f(unction)."
   [binding f]
   [(->> (str/split binding #" ")
         (map #(get avaiable-keys %))),
