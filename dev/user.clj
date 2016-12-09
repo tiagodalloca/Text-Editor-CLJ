@@ -3,7 +3,7 @@
 (require '[editor-clj.main :as main]
          '[editor-clj.core :as core]
          '[editor-clj.key-resolver :as k]
-         '[editor-clj.structures :as strs]
+         '[editor-clj.utils :as u]
          
          '[clojure.java.io :as io]
          '[clojure.string :as str]

@@ -1,11 +1,11 @@
 (ns editor-clj.core
-  (:require [editor-clj.structures :refer :all]
+  (:require [editor-clj.utils :refer :all]
             [editor-clj.key-resolver :as kr])
   (:import [jline.console ConsoleReader]
            [java.util Stack]))
 
 (def editor-state
-  (atom {:curr-ln nil
+  (atom {:lines nil
          :curr-coln nil
          :insert-mode nil
          :keys-map {:default-function #(do nil)}}))
@@ -27,7 +27,8 @@
   []
   (when (can-undo?)
     (let [old-s (.pop state-stack)
-          f (.pop action-stack)])))
+          f (.pop action-stack)]
+      )))
 
 (defn get-editor
   [& k]
@@ -40,6 +41,14 @@
    (swap! editor-state update k f))
   ([k f & args]
    (swap! editor-state update k f args)))
+
+(defn update-in-editor!
+  "Updates the editor state, where f is a function that will do the magic
+  and ks is a keyword vector that indicates what will be updated"
+  ([ks f]
+   (swap! editor-state update-in ks f))
+  ([ks f & args]
+   (swap! editor-state update-in ks f args)))
 
 (defn set-editor!
   "No docsting provided"
@@ -58,10 +67,10 @@
       :keys-map
       #(merge % b#))))
 
-(defn start-writing
-  "Configurates the global vars to write"
+(defn start-writing!
+  "Configurates the global state to write"
   []
-  (set-editor! :curr-ln (line "" nil nil))
+  (set-editor! :lines (dbl '("")))
   (set-editor! :curr-coln 0)
   (set-editor! :insert-mode true))
 
@@ -73,21 +82,23 @@
 (defn breakline
   "Breaks the curr(ent) line in the curr(ent) coln"
   []
-  (let [ln (get-editor :curr-ln)]
-    (breakline-at ln (get-editor :curr-coln))
-    (set-editor! :curr-ln (ln-next ln))))
+  (let [coln (get-editor :curr-coln)]
+    (update-editor! :lines #(breakline-at % coln))
+    (set-editor! :curr-coln 0)))
 
 (defn insert-char
   "Inserts a char at the curr(ent) position"
   [c]
-  (let [ln (get-editor :curr-ln)
+  (let [ln (get-editor :lines)
         coln (get-editor :curr-coln)
-        ln-s (.length (ln-content ln))]
-    (do ((if (and (not (toggle-insert))
-                  (< coln ln-s))
-           ln-replace-char
-           ln-insert-char)
-         ln coln c)
+        curr (:curr ln)
+        curr-s (.length curr)]
+    (do (update-in-editor! [:lines :curr]
+                           #((if (or (get-editor :insert-mode)
+                                     (== coln curr-s))
+                               str-insert
+                               str-replace)
+                             % c coln))
         (update-editor! :curr-coln inc))))
 
 (defn backspace
@@ -95,30 +106,31 @@
   []
   (let [coln (get-editor :curr-coln)]
     (if (> coln 0)
-      (ln-delete-char (get-editor :curr-ln) (dec coln))
-      (let [ln (get-editor :curr-ln)
-            pln (ln-prev ln)]
-        (when pln
-          (merge-lines pln ln))))))
+      (do (update-in-editor! [:lines :curr] #(str-delete % (dec coln)))
+          (update-editor! :curr-coln dec))
+      (update-editor! :lines #(-> (dbl-prev %)
+                                  (merge-lines))))))
 
 (defn delete
   "Deletes the char at the curr(ent) position"
   []
   (let [coln (get-editor :curr-coln)
-        ln (get-editor :curr-ln)] 
+        ln (get-editor :lines)
+        curr (:curr ln)] 
     (if (and (> coln 0)
-             (> (.length ln) 0))
-      (ln-delete-char ln coln)
-      (when (ln-next ln)
-        (merge-lines ln)))))
+             (> (.length curr) 0))
+      (update-in-editor! [:lines :curr] #(str-delete % coln))
+      (when (dbl-get-next)
+        (update-editor! :lines #(merge-lines %))))))
 
 (defn forward
   "Moves forward"
   [] 
-  (let [nln (ln-next (get-editor :curr-ln))
+  (let [nln (dbl-get-next
+             (get-editor :lines))
         coln (get-editor :curr-coln)]
     (when nln
-      (do (set-editor! :curr-ln nln)
+      (do (update-editor! :lines #(dbl-next %))
           (set-editor! :curr-coln
                        (let [nln-s (.length nln)]
                          (if (< coln nln-s)
@@ -127,10 +139,10 @@
 (defn backward
   "Moves backward"
   [] 
-  (let [pln (ln-prev (get-editor :curr-ln))
+  (let [pln (dbl-get-prev (get-editor :lines))
         coln (get-editor :curr-coln)]
     (when pln
-      (do (set-editor! :curr-ln pln)
+      (do (update-editor! :lines #(dbl-prev %))
           (set-editor! :curr-coln
                        (let [pln-s (.length pln)]
                          (if (< coln pln-s)
@@ -139,27 +151,26 @@
 (defn righthward
   "Moves righthward"
   []
-  (let [coln (get-editor :curr-coln)
-        ln   (get-editor :curr-ln)
-        ln-s (.length (ln-content ln))]
-    (if (< coln ln-s)
+  (let [coln   (get-editor :curr-coln)
+        ln     (get-editor :lines)
+        curr-s (.length (:curr ln))]
+    (if (< coln curr-s)
       (update-editor! :curr-coln inc)
-      (when-let [nln (ln-next ln)]
-        (do (set-editor! :curr-ln nln)
+      (when-let [nln (dbl-get-next ln)]
+        (do (update-editor! :lines #(dbl-next %))
             (set-editor! :curr-coln 0))))))
 
 (defn leftward
   "Moves leftward"
   []
   (let [coln (get-editor :curr-coln)
-        ln   (get-editor :curr-ln)]
+        ln   (get-editor :lines)]
     (if (> coln 0)
       (update-editor! :curr-coln dec)
-      (when-let [pln (ln-prev ln)]
-        (do (set-editor! :curr-ln pln)
+      (when-let [pln (dbl-get-prev ln)]
+        (do (update-editor! :lines #(dbl-prev %))
             (set-editor! :curr-coln
-                         (-> (ln-content pln)
-                             (.length)
+                         (-> (.length pln)
                              (dec))))))))
 
 (defn resolve-keys

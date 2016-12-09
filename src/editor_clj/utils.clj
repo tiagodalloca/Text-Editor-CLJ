@@ -1,4 +1,4 @@
-(ns editor-clj.structures
+(ns editor-clj.utils
   (:require [clojure.string :as s]))
 
 (defn str-insert
@@ -86,7 +86,7 @@
      :prev prev
      :curr nstr}))
 
-(defn breakline
+(defn breakline-at
   "Breaks :curr at index i, updates :next and :curr. l is a doubly-linked 
   list"
   [{:keys [next prev curr] :as l} i]
