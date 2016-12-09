@@ -72,17 +72,16 @@
   If not, default-fn will be evaluated" 
   ([hash reader default-fn]
    (flush) 
-   (let [the-one (loop [code (.readCharacter reader)
-                        candidates (find-candidates hash code)]
-                   (if (> (count candidates)
-                          1) 
-                     (let [code (.readCharacter reader)
-                           candidates (find-candidates candidates code)]
-                       (recur code candidates))
-                     candidates))]
-     (if (not (empty? the-one))
-       ((first (vals the-one)))
-       (default-fn))))
+   (loop [code (.readCharacter reader)
+          candidates (find-candidates hash code)]
+     (if (> (count candidates)
+            1) 
+       (let [code (.readCharacter reader)
+             candidates (find-candidates candidates code)]
+         (recur code candidates))
+       (if (not (empty? candidates))
+         ((first (vals candidates)))
+         (default-fn (char code))))))
   ([hash reader]
    (resolve-keystroke (dissoc hash :default-function)
                       reader

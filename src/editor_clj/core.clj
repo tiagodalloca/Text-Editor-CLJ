@@ -10,6 +10,8 @@
          :insert-mode nil
          :keys-map {:default-function #(do nil)}}))
 
+(def quit (atom false))
+
 ;; (def action-stack (atom '()))
 (def state-stack (atom '()))
 
@@ -72,6 +74,11 @@
   (set-editor! :lines (dbl '("")))
   (set-editor! :curr-coln 0)
   (set-editor! :insert-mode true))
+
+(defn quit!
+  "Set global atom quit to true"
+  []
+  (reset! quit true))
 
 (defn toggle-insert
   "Toggles insert-mode"
