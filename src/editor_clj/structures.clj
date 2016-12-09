@@ -24,7 +24,8 @@
      :prev '()
      :curr (peek s)}))
 
-(defn dbl-next 
+(defn dbl-next
+  "Updates :curr to :next's peek, pushes :curr to :prev and pops :next"
   [{:keys [next prev curr] :as l}]
   (when-not (empty? next)    
     {:next (pop next)
@@ -32,6 +33,7 @@
      :curr (peek next)}))
 
 (defn dbl-prev
+  "Updates :curr to :prev's peek, pushes :curr to :next and pops :prev"
   [{:keys [next prev curr] :as l}]
   (when-not (empty? prev)
     {:next (conj next curr)
@@ -39,58 +41,56 @@
      :curr (peek prev)}))
 
 (defn dbl-add-after
+  "Adds x to l's :next"
   [l x]
   (update l :next #(conj % x)))
 
 (defn dbl-add-before
+  "Adds x to l's :prev"
   [l x]
   (update l :prev #(conj % x)))
 
-(defn ln-insert-char
-  "Inserts c into the line :content at the index i"
-  [ln c i] 
-  (ln update :content #(str-insert % i c)))
+(defn dbl-get-next
+  "Gets the next element of l"
+  [l]
+  (first (:next l)))
 
-(defn ln-replace-char
-  "Replaces a char at the index i of line for c"
-  [ln c i]
-  (update ln :content #(str-replace % i c)))
+(defn dbl-get-prev
+  "Gets the previous element l"
+  [l]
+  (first (:prev l)))
 
-(defn ln-delete-char
-  "Deletes the char of the i index"
-  [ln i]
-  (update ln :content #(str-delete % i)))
+(defn dbl-delete
+  "Deletes the current element"
+  [{:keys [next prev curr] :as l}]
+  {:next (pop next)
+   :prev prev
+   :curr (peek next)})
+
+(defn dbl-delete-next
+  "Deletes the current element"
+  [l]
+  (update l :next pop))
+
+(defn dbl-delete-prev
+  "Deletes the current element"
+  [l]
+  (update :prev pop))
 
 (defn merge-lines
-  "Concats the ln's :content with oln's and sets ln's :next to 
-  oln's"
-  ([ln oln] 
-   (let [tln (transient ln)
-         oln oln
-         s1 (:content tln)
-         s2 (:content oln)
-         st (str s1 s2)]   
-     (do (assoc! tln :content st)
-         (assoc! tln :next (:next oln))
-         (persistent! tln)))))
+  "l is supposed to be a list of strings and the next line will be
+  concatenated with the current one." 
+  [{:keys [next prev curr] :as l}]
+  (let [nstr (str curr (peek next))]
+    {:next (pop next)
+     :prev prev
+     :curr nstr}))
 
-;; (defn breakline-at
-;;   "Breaks the line at index i and updates :next"
-;;   [ln i]
-;;   (let [n-str (subs (ln-content ln) 0 i)
-;;         b-str (subs (ln-content ln) i)
-;;         old-nln (ln-next ln)
+(defn breakline
+  "Breaks :curr at index i, updates :next and :curr. l is a doubly-linked 
+  list"
+  [{:keys [next prev curr] :as l} i]
+  {:next next 
+   :prev (conj prev (.substring curr 0 i))
+   :curr (.substring curr i)})
 
-;;         ln-c (transient @ln)]
-;;     (do (assoc! ln-c :content n-str)
-;;         (assoc! ln-c :next (line b-str ln old-nln))
-;;         (reset! ln (persistent! ln-c))
-;;         ln)))
-
-;; (defn str-ln
-;;   ([ln]
-;;    (str-ln (ln-next ln) (ln-content ln)))
-;;   ([ln acc]
-;;    (if ln
-;;      (recur (ln-next ln) (str acc \newline (ln-content ln)))
-;;      acc)))
