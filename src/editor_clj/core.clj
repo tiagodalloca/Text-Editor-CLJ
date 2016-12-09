@@ -10,25 +10,24 @@
          :insert-mode nil
          :keys-map {:default-function #(do nil)}}))
 
-(def action-stack (Stack.))
-(def state-stack (Stack.))
+;; (def action-stack (atom '()))
+(def state-stack (atom '()))
 
 (add-watch editor-state :add-stack
            (fn [k r o n]
-             (.push state-stack o)))
+             (swap! state-stack conj o)))
 
 (defn can-undo?
   []
-  (not (or (.isEmpty action-stack)
-           (.isEmpty state-stack))))
+  (not ;;(or (empty? action-stack)
+   (empty? @state-stack)))
 
 (defn undo!
   "Pop the action and the state stack"
   []
   (when (can-undo?)
-    (let [old-s (.pop state-stack)
-          f (.pop action-stack)]
-      )))
+    (reset! editor-state (peek @state-stack))
+    (swap! state-stack #(-> (pop %) pop))))
 
 (defn get-editor
   [& k]
