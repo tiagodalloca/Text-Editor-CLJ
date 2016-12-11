@@ -16,29 +16,51 @@
   [s i]
   (str (subs s 0 i) (subs s (inc i) (.length s))))
 
+(defrecord DoubleLL
+    [next prev curr]
+  Object
+  (toString [{:keys [next prev curr] :as l}]
+    (str "("
+         (reduce #(str %1 " " %2) "" (reverse prev))
+         " [ " curr " ] "
+         (reduce #(str %1 " " %2) "" next)
+         ")")))
+
+(defmethod clojure.core/print-method DoubleLL [x writer]
+  (.write writer (str x)))
+
 (defn dbl
   "Constructs a doubly-linked list, where s is a sequence to start off"
   [s]
   (let [s (seq s)]
-    {:next (pop s)
-     :prev '()
-     :curr (peek s)}))
+    (->DoubleLL (pop s)
+                '()
+                (peek s))))
 
 (defn dbl-next
   "Updates :curr to :next's peek, pushes :curr to :prev and pops :next"
   [{:keys [next prev curr] :as l}]
-  (when-not (empty? next)    
-    {:next (pop next)
-     :prev (conj prev curr)
-     :curr (peek next)}))
+  (when-not (empty? next) 
+    (-> l
+        (update :next pop)
+        (update :prev #(conj % curr))
+        (assoc :curr (peek next)))))
 
 (defn dbl-prev
   "Updates :curr to :prev's peek, pushes :curr to :next and pops :prev"
   [{:keys [next prev curr] :as l}]
-  (when-not (empty? prev)
-    {:next (conj next curr)
-     :prev (pop prev)
-     :curr (peek prev)}))
+  (when-not (empty? prev) 
+    (-> l
+        (update :next #(conj % curr))
+        (update :prev pop)
+        (assoc :curr (peek prev)))))
+
+(defn dbl-delete
+  "Deletes the current element"
+  [{:keys [next prev curr] :as l}]  
+  (-> l
+      (update :next pop) 
+      (assoc :curr (peek next))))
 
 (defn dbl-add-after
   "Adds x to l's :next"
@@ -59,13 +81,6 @@
   "Gets the previous element l"
   [l]
   (first (:prev l)))
-
-(defn dbl-delete
-  "Deletes the current element"
-  [{:keys [next prev curr] :as l}]
-  {:next (pop next)
-   :prev prev
-   :curr (peek next)})
 
 (defn dbl-delete-next
   "Deletes the current element"
@@ -90,7 +105,7 @@
   "Breaks :curr at index i, updates :next and :curr. l is a doubly-linked 
   list"
   [{:keys [next prev curr] :as l} i]
-  {:next next 
-   :prev (conj prev (.substring curr 0 i))
-   :curr (.substring curr i)})
+  (-> l
+      (update :prev #(conj % (.substring curr 0 i)))
+      (update :curr #(.substring % i))))
 

@@ -11,7 +11,7 @@
     (c/set-default-function! c/insert-char)
     (c/map-keys! "CTRL-h" (do (c/backspace))
                  "CTRL-d" (do (c/delete))
-                 "CTRL-m" (do #dbg (c/breakline))
+                 "CTRL-m" (do (c/breakline))
                  "CTRL-f" (do (c/righthward))
                  "CTRL-b" (do (c/leftward))
                  "CTRL-n" (do (c/forward))

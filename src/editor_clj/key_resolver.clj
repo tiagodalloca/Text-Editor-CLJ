@@ -56,7 +56,7 @@
   (let [binding-form (partition 2  binding-form)]
     `(reduce (fn [acc# [binding# form#]] 
                (append-binding acc#  binding#
-                               (form-func (eval form#))))
+                               (fn [] form#)))
              {} '~binding-form)))
 
 (defn find-candidates
