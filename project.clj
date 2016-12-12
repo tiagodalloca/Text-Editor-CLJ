@@ -10,5 +10,7 @@
 
                     :plugins [[cider/cider-nrepl "0.14.0"]]
                     :main user
-                    :uberjar-name "user.jar"}})
+                    :uberjar-name "user.jar"}
+             :release {:main editor-clj.main
+                       :uberjar-name "release.jar"}})
 

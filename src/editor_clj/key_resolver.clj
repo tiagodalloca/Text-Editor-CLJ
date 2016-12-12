@@ -1,6 +1,6 @@
 (ns editor-clj.key-resolver
-  (:require [clojure.string :as str])
-  (:import [jline.console ConsoleReader]))
+  (:require [editor-clj.utils :as u]
+            [clojure.string :as str]))
 
 (defn get-chars-map
   "Use it and see the magic"
@@ -46,6 +46,12 @@
         [k v] new-binding]
     (assoc hash k v)))
 
+(defn- append-quoted-binding
+  [hash binding f]
+  (let [new-binding (create-binding binding f)
+        [k v] new-binding]
+    (assoc hash `'~k v)))
+
 (defmacro form-func
   "Transforms a form to a function"
   [form]
@@ -53,39 +59,11 @@
 
 (defmacro map-bindings
   [& binding-form]
-  (let [binding-form (partition 2  binding-form)]
-    `(reduce (fn [acc# [binding# form#]] 
-               (append-binding acc#  binding#
-                               (fn [] form#)))
-             {} '~binding-form)))
-
-(defn find-candidates
-  "Finds candidates"
-  [map value]
-  (->> (for [[k v] map
-             :when (= (first k) value)]
-         [(drop 1 k) v]) 
-       (into {})))
-
-(defn resolve-keystroke
-  "Resolves a keystroke based on a hash-map of bindings if finded.
-  If not, default-fn will be evaluated" 
-  ([hash reader default-fn]
-   (flush) 
-   (loop [code (.readCharacter reader)
-          candidates (find-candidates hash code)]
-     (if (> (count candidates)
-            1) 
-       (let [code (.readCharacter reader)
-             candidates (find-candidates candidates code)]
-         (recur code candidates))
-       (if (not (empty? candidates))
-         ((first (vals candidates)))
-         (default-fn (char code))))))
-  ([hash reader]
-   (resolve-keystroke (dissoc hash :default-function)
-                      reader
-                      (:default-function hash))))
+  (let [binding-form (partition 2 binding-form)]
+    (reduce (fn [acc [binding form]] 
+              (append-quoted-binding acc binding
+                                     `(form-func ~form)))
+            {} binding-form)))
 
 (defn find-keystroke
   "Finds (but doesn't execute) a binding based on a hash-map of bindings

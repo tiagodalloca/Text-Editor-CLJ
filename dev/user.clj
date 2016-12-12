@@ -1,6 +1,7 @@
 (ns user
-  (:require [editor-clj.main :as main]
-            [editor-clj.core :as core]
+  (:require [editor-clj.main :as m]
+            [editor-clj.buffer :as b]
+            [editor-clj.core :as c]
             [editor-clj.key-resolver :as k]
             [editor-clj.utils :as u]
             [clojure.java.io :as io]
@@ -17,6 +18,5 @@
 (defn -main [& args]
   (println "Starting server...")
   (nrepl-server/start-server :port 7888 :handler cider-nrepl-handler)
-  (println "Server started at port 7888")
-  (apply main/-main args))
+  (println "Server started at port 7888"))
 

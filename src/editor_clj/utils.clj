@@ -97,9 +97,8 @@
   concatenated with the current one." 
   [{:keys [next prev curr] :as l}]
   (let [nstr (str curr (peek next))]
-    {:next (pop next)
-     :prev prev
-     :curr nstr}))
+    (-> (update l :next pop) 
+        (assoc :curr nstr))))
 
 (defn breakline-at
   "Breaks :curr at index i, updates :next and :curr. l is a doubly-linked 
@@ -108,4 +107,18 @@
   (-> l
       (update :prev #(conj % (.substring curr 0 i)))
       (update :curr #(.substring % i))))
+
+(defprotocol IWindow
+  "Abstraction of a window in which can be written lines, positioned
+  a cursor and mapped keys"
+  (init [this]
+    "Do anything needed to work")
+  (cursor [this] [this x y]
+    "Sets or gets cursor position")
+  (print-lines [this lines]
+    "Print lines, where \"lines\" is a seq of string")
+  (key-bindings [this bindings-map] [this])
+  (reset [this]
+    "Clears everything")
+  (quit [this]))
 
