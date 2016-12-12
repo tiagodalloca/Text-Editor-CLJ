@@ -112,12 +112,9 @@
   "Abstraction of a window in which can be written lines, positioned
   a cursor and mapped keys"
   (init [this]
-    "Do anything needed to work")
-  (cursor [this] [this x y]
-    "Sets or gets cursor position")
+    "Do anything needed to work") 
   (print-lines [this lines]
-    "Print lines, where \"lines\" is a seq of string")
-  (key-bindings [this bindings-map] [this])
+    "Print lines, where \"lines\" is a seq of string") 
   (reset [this]
     "Clears everything")
   (quit [this]))

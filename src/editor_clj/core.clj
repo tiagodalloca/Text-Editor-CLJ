@@ -14,21 +14,22 @@
   u/IWindow
   (init [this] 
     (let [sp (.s-panel this)
-          sf (.s-frame this)
-          im (.getInputMap sp)
+          sf (.s-frame this) 
           kb (.key-bindings this)] 
-      (doseq [[k f] kb] 
+      (doseq [[k f] kb
+              :let [action-name (str k "-action")]]
         (doto sp
           (.. (getInputMap)
-              (.put (KeyStroke/getKeyStroke k) "hue"))
+              (put (KeyStroke/getKeyStroke k) action-name))
           (.. (getActionMap)
-              (.put "hue"
-                    (proxy [AbstractAction] []
-                      (actionPerformed [e]
-                        (println "Action performed!"))))))
-        (doto sf
-          (.add sp)
-          (.show)))))
+              (put action-name
+                   (proxy [AbstractAction] []
+                     (actionPerformed [e]
+                       (f)))))))
+      (doto sf
+        (.add sp)
+        (.show))
+      (.requestFocus sp)))
   (print-lines [this lines]
     (println "Duh"))
   (reset [this]
@@ -36,19 +37,8 @@
   (quit [this]
     (println "Ahn")))
 
-;; (def hue (EditorWindow. (JFrame.) (JPanel.) [0 0] {"control s" #(println "I don't like u")}))
-
-;; (def hh (JPanel.))
-
-;; (def huhue (doto (JFrame.)
-;;              (.add hh)
-;;              (.show)))
-
-;; (.requestFocus hh)
-
-;; (.put (.getInputMap hh) (KeyStroke/getKeyStroke "s")
-;;       (proxy [AbstractAction] []
-;;         (actionPerformed [e]
-;;           (println "Action performed!"))))
+;; (def hue (EditorWindow. (JFrame.) (JPanel.) [0 0]
+;;                         {"typed s" #(println "typed s")
+;;                          "control S" #(println "alt s")}))
 
 ;; (.init hue)
