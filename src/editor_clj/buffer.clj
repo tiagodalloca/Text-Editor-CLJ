@@ -1,6 +1,5 @@
 (ns editor-clj.buffer
-  (:require [editor-clj.utils :refer :all]
-            [editor-clj.key-resolver :as kr])
+  (:require [editor-clj.utils :refer :all])
   (:import [jline.console ConsoleReader]
            [java.util Stack]))
 

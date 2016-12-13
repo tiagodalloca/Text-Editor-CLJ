@@ -1,8 +1,7 @@
 (ns user
   (:require [editor-clj.main :as m]
             [editor-clj.buffer :as b]
-            [editor-clj.core :as c]
-            [editor-clj.key-resolver :as k]
+            [editor-clj.core :as c] 
             [editor-clj.utils :as u]
             [clojure.java.io :as io]
             [clojure.string :as str]

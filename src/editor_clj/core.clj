@@ -3,42 +3,79 @@
             [editor-clj.utils :as u]
             [clojure.string :as str])
   (:import [javax.swing
-            JFrame JPanel KeyStroke AbstractAction]
-           [java.awt.event ActionListener]))
+            JFrame
+            JPanel
+            JComponent
+            KeyStroke
+            AbstractAction
+            ImageIcon]
+           [java.awt.event
+            ActionListener
+            ComponentListener]
+           [java.awt
+            Graphics
+            Color]))
 
 (defrecord EditorWindow
-    [s-frame
-     s-panel
-     cursor
+    [frame
+     panel 
      key-bindings]
   u/IWindow
   (init [this] 
-    (let [sp (.s-panel this)
-          sf (.s-frame this) 
+    (let [p (.panel this) 
           kb (.key-bindings this)] 
       (doseq [[k f] kb
               :let [action-name (str k "-action")]]
-        (doto sp
+        (doto panel
           (.. (getInputMap)
               (put (KeyStroke/getKeyStroke k) action-name))
           (.. (getActionMap)
               (put action-name
                    (proxy [AbstractAction] []
                      (actionPerformed [e]
-                       (f)))))))
-      (doto sf
-        (.add sp)
+                       (f))))))) 
+      (doto frame
+        (.add panel) 
         (.show))
-      (.requestFocus sp)))
+      (.requestFocus p)))
   (print-lines [this lines]
-    (println "Duh"))
+    (let []))
   (reset [this]
     (println "Hue"))
   (quit [this]
     (println "Ahn")))
 
-;; (def hue (EditorWindow. (JFrame.) (JPanel.) [0 0]
-;;                         {"typed s" #(println "typed s")
-;;                          "control S" #(println "alt s")}))
+(defn hex-color [s]
+  (letfn [(hexfy [i j] (Integer/valueOf (.substring s i j), 16))]
+    (Color. (hexfy 1 3) (hexfy 3 5) (hexfy 5 7))))
 
-;; (.init hue)
+(defn paint-editor [g w h] 
+  (.setColor g (hex-color "#25333c"))
+  (.fillRect g 0 0 w h))
+
+(def editor-panel
+  `(proxy [JPanel] []
+     (paintComponent [g]
+       (proxy-super paintComponent g)
+       (let [size (.getSize this)
+             w (.width size)
+             h (.height size)]
+         (paint-editor g w h)))))
+
+(defn editor-window
+  ([[w h :as dimensions] key-bindings icon-path]
+   (let [frame (JFrame.)
+         panel editor-panel]
+     (doto frame
+       (.setSize w h)
+       (.setIconImage (ImageIcon. icon-path)))
+     (doto panel
+       (.setSize w h))
+     (->EditorWindow frame panel key-bindings)))
+  ([[w h :as dimensions] key-bindings]
+   (let [frame (JFrame.)
+         panel editor-panel] 
+     (doto frame
+       (.setSize w h))
+     (->EditorWindow frame panel key-bindings))))
+
