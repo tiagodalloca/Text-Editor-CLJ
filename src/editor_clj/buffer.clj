@@ -1,5 +1,6 @@
 (ns editor-clj.buffer
-  (:require [editor-clj.utils :refer :all])
+  (:require [editor-clj.utils :refer :all]
+            [editor-clj.doubly-linked-list :refer :all])
   (:import [jline.console ConsoleReader]
            [java.util Stack]))
 
@@ -89,7 +90,7 @@
   [c]
   (let [ln (get-editor :lines)
         coln (get-editor :curr-coln)
-        curr (:curr ln)
+        curr (curr ln)
         curr-s (.length curr)]
     (do (update-in-editor! [:lines :curr]
                            #((if (or (get-editor :insert-mode)
@@ -106,7 +107,7 @@
     (if (> coln 0)
       (do (update-in-editor! [:lines :curr] #(str-delete % (dec coln)))
           (update-editor! :curr-coln dec))
-      (update-editor! :lines #(-> (dbl-prev %)
+      (update-editor! :lines #(-> (backward %)
                                   (merge-lines))))))
 
 (defn delete
@@ -118,29 +119,29 @@
     (if (and (> coln 0)
              (> (.length curr) 0))
       (update-in-editor! [:lines :curr] #(str-delete % coln))
-      (when (dbl-get-next)
+      (when (pick-next ln)
         (update-editor! :lines #(merge-lines %))))))
 
-(defn forward
+(defn upward
   "Moves forward"
   [] 
-  (let [nln (dbl-get-next
+  (let [nln (pick-next
              (get-editor :lines))
         coln (get-editor :curr-coln)]
     (when nln
-      (do (update-editor! :lines #(dbl-next %))
+      (do (update-editor! :lines #(forward %))
           (set-editor! :curr-coln
                        (let [nln-s (.length nln)]
                          (if (< coln nln-s)
                            coln nln-s)))))))
 
-(defn backward
+(defn downward
   "Moves backward"
   [] 
-  (let [pln (dbl-get-prev (get-editor :lines))
+  (let [pln (pick-prev (get-editor :lines))
         coln (get-editor :curr-coln)]
     (when pln
-      (do (update-editor! :lines #(dbl-prev %))
+      (do (update-editor! :lines #(backward %))
           (set-editor! :curr-coln
                        (let [pln-s (.length pln)]
                          (if (< coln pln-s)
@@ -154,8 +155,8 @@
         curr-s (.length (:curr ln))]
     (if (< coln curr-s)
       (update-editor! :curr-coln inc)
-      (when-let [nln (dbl-get-next ln)]
-        (do (update-editor! :lines #(dbl-next %))
+      (when-let [nln (pick-next ln)]
+        (do (update-editor! :lines #(forward %))
             (set-editor! :curr-coln 0))))))
 
 (defn leftward
@@ -165,8 +166,8 @@
         ln   (get-editor :lines)]
     (if (> coln 0)
       (update-editor! :curr-coln dec)
-      (when-let [pln (dbl-get-prev ln)]
-        (do (update-editor! :lines #(dbl-prev %))
+      (when-let [pln (pick-next ln)]
+        (do (update-editor! :lines #(backward %))
             (set-editor! :curr-coln
                          (-> (.length pln)
                              (dec))))))))
