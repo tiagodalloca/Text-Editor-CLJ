@@ -42,3 +42,8 @@
      (reduce acc+l "" (reverse prevs))
      (conj nexts curr))))
 
+
+(defn lines-as-seq
+  [{:keys [nexts prevs curr] :as l}]
+  (concat (reverse prevs) (conj nexts curr)))
+

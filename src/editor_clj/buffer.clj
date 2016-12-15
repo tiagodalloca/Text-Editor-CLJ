@@ -7,10 +7,9 @@
 (def editor-state
   (atom {:lines nil
          :curr-coln nil
-         :insert-mode nil
-         :keys-map {:default-function #(do nil)}}))
+         :curr-row nil
+         :insert-mode nil}))
 
-;; (def action-stack (atom '()))
 (def state-stack (atom '()))
 
 (add-watch editor-state :add-stack
@@ -54,23 +53,12 @@
   [k v]
   (swap! editor-state assoc k v))
 
-(defn set-default-function!
-  [f]
-  (update-editor! :keys-map
-                  #(assoc % :default-function f)))
-
-(defmacro map-keys!
-  [& binding-form]
-  `(let [b# (kr/map-bindings ~@binding-form)] 
-     (update-editor!
-      :keys-map
-      #(merge % b#))))
-
 (defn start-writing!
   "Configurates the global state to write"
   []
   (set-editor! :lines (dbl '("")))
   (set-editor! :curr-coln 0)
+  (set-editor! :curr-row 0)
   (set-editor! :insert-mode true))
 
 (defn toggle-insert
@@ -83,7 +71,8 @@
   []
   (let [coln (get-editor :curr-coln)]
     (update-editor! :lines #(breakline-at % coln))
-    (set-editor! :curr-coln 0)))
+    (set-editor! :curr-coln 0)
+    (update-editor! :curr-row inc)))
 
 (defn insert-char
   "Inserts a char at the curr(ent) position"
@@ -106,9 +95,12 @@
   (let [coln (get-editor :curr-coln)]
     (if (> coln 0)
       (do (update-in-editor! [:lines :curr] #(str-delete % (dec coln)))
-          (update-editor! :curr-coln dec))
-      (update-editor! :lines #(-> (backward %)
-                                  (merge-lines))))))
+          (update-editor! :curr-coln dec)) 
+      (when-let [pln (peek (get-editor :lines :prevs))]
+        (update-editor! :lines #(-> (backward %)
+                                    (merge-lines)))
+        (set-editor! :curr-coln (.length pln))
+        (update-editor! :curr-row dec)))))
 
 (defn delete
   "Deletes the char at the curr(ent) position"
@@ -116,36 +108,36 @@
   (let [coln (get-editor :curr-coln)
         ln (get-editor :lines)
         curr (:curr ln)] 
-    (if (and (> coln 0)
-             (> (.length curr) 0))
+    (if (and (> coln 0) (> (.length curr) 0))
       (update-in-editor! [:lines :curr] #(str-delete % coln))
       (when (pick-next ln)
         (update-editor! :lines #(merge-lines %))))))
 
 (defn upward
-  "Moves forward"
-  [] 
-  (let [nln (pick-next
-             (get-editor :lines))
-        coln (get-editor :curr-coln)]
-    (when nln
-      (do (update-editor! :lines #(forward %))
-          (set-editor! :curr-coln
-                       (let [nln-s (.length nln)]
-                         (if (< coln nln-s)
-                           coln nln-s)))))))
-
-(defn downward
-  "Moves backward"
+  "Moves upward"
   [] 
   (let [pln (pick-prev (get-editor :lines))
         coln (get-editor :curr-coln)]
     (when pln
       (do (update-editor! :lines #(backward %))
+          (update-editor! :curr-row dec)
           (set-editor! :curr-coln
                        (let [pln-s (.length pln)]
                          (if (< coln pln-s)
                            coln pln-s)))))))
+
+(defn downward
+  "Moves upward"
+  [] 
+  (let [nln (pick-next (get-editor :lines))
+        coln (get-editor :curr-coln)]
+    (when nln
+      (do (update-editor! :lines #(forward %))
+          (update-editor! :curr-row inc)
+          (set-editor! :curr-coln
+                       (let [nln-s (.length nln)]
+                         (if (< coln nln-s)
+                           coln nln-s)))))))
 
 (defn righthward
   "Moves righthward"
@@ -157,6 +149,7 @@
       (update-editor! :curr-coln inc)
       (when-let [nln (pick-next ln)]
         (do (update-editor! :lines #(forward %))
+            (update-editor! :curr-row inc)
             (set-editor! :curr-coln 0))))))
 
 (defn leftward
@@ -168,6 +161,7 @@
       (update-editor! :curr-coln dec)
       (when-let [pln (pick-next ln)]
         (do (update-editor! :lines #(backward %))
+            (update-editor! :curr-row dec)
             (set-editor! :curr-coln
                          (-> (.length pln)
                              (dec))))))))

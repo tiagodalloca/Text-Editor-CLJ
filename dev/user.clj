@@ -3,6 +3,7 @@
             [editor-clj.buffer :as b]
             [editor-clj.core :as c] 
             [editor-clj.utils :as u]
+            [editor-clj.keys :as k]
             [editor-clj.doubly-linked-list :refer :all]
             [clojure.java.io :as io]
             [clojure.string :as str]
