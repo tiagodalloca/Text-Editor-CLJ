@@ -10,23 +10,36 @@
          :curr-row nil
          :insert-mode nil}))
 
-(def state-stack (atom '()))
+(def undo-stack (atom '()))
+(def redo-stack (atom '()))
 
 (add-watch editor-state :add-stack
-           (fn [k r o n]
-             (swap! state-stack conj o)))
+           (fn [k a o n]
+             (swap! undo-stack conj o)
+             (when (not-empty @redo-stack)
+               (swap! redo-stack empty))))
 
-(defn can-undo?
-  []
-  (not ;;(or (empty? action-stack)
-   (empty? @state-stack)))
+(defn can-undo?  [] (not-empty @undo-stack))
+(defn can-redo?  [] (not-empty @redo-stack))
 
 (defn undo!
   "Pop the action and the state stack"
   []
   (when (can-undo?)
-    (reset! editor-state (peek @state-stack))
-    (swap! state-stack #(-> (pop %) pop))))
+    (let [ors (swap! redo-stack #(conj % @editor-state))]
+      (reset! editor-state (peek @undo-stack))
+      (reset! redo-stack ors))
+    (swap! undo-stack #(-> % pop pop))))
+
+(defn redo!
+  "Pop the action and the state stack"
+  []
+  (when (can-redo?)
+    (swap! undo-stack #(conj % @editor-state))
+    (let [ors @redo-stack]
+      (reset! editor-state (peek @redo-stack))
+      (reset! redo-stack (pop ors)))
+    (swap! undo-stack pop)))
 
 (defn get-editor
   [& k]

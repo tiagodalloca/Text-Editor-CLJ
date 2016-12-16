@@ -23,6 +23,7 @@
 (defn brk [str-key] (buffer/breakline))
 (defn bsp [str-key] (buffer/backspace))
 (defn c-z [str-key] (buffer/undo!))
+(defn c-y [str-key] (buffer/redo!))
 (defn del [str-key] (buffer/delete))
 (defn quit [str-key] '(.close panel))
 (defn r [str-key] (buffer/righthward))
@@ -39,6 +40,8 @@
    \space common-whatever
    "control released Z" c-z
    "control Z" c-z
+   "control released Y"c-y
+   "control Y" c-y
    "control D" del
    "control released D" del
    "control released Q" quit 

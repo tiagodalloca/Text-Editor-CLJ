@@ -4,25 +4,12 @@
             [clojure.string :as str]
             [clojure.java.io :as io])
   (:import [java.io Writer FileWriter IOException]
-           [javax.swing
-            JFrame
-            JPanel
-            JComponent
-            JFileChooser
-            KeyStroke
-            AbstractAction
-            ImageIcon]
-           [java.awt.event
-            ActionListener
-            ActionEvent
-            ComponentListener]
-           [java.awt
-            Graphics
-            Font
-            Color] 
+           [javax.swing JFrame JPanel JComponent JFileChooser KeyStroke AbstractAction ImageIcon]
+           [java.awt.event ActionListener ActionEvent ComponentListener]
+           [java.awt Graphics Font Color] 
            [java.nio.charset Charset]))
 
-(defn config-frame [frame w h panel]
+(defn config-frame [frame [w h] panel]
   (doto frame
     (.setSize w h) 
     (.add panel)))
@@ -87,13 +74,13 @@
          panel (editor-panel editor-state)]
      
      (doto frame
-       (config-frame panel w h)
+       (config-frame panel [w h])
        (.setIconImage (ImageIcon. icon-path))) 
      (->EditorWindow frame panel)))
   ([[w h :as dimensions] editor-state]
    (let [frame (JFrame.)
          panel (editor-panel editor-state)] 
-     (config-frame frame w h panel) 
+     (config-frame frame [w h] panel) 
      (->EditorWindow frame panel))))
 
 (defn config-window-bindings
@@ -102,11 +89,8 @@
 
 (defn init-editor-window
   [{:keys [frame panel] :as ew}]
-  (doto frame
-    (.show))
-  (doto panel
-    (.repaint)
-    (.requestFocus)))
+  (doto frame (.show))
+  (doto panel (.repaint) (.requestFocus)))
 
 (defn save-file
   [parent lines]
@@ -115,9 +99,7 @@
       (try (with-open [w (io/writer (.. jfc getSelectedFile getPath)
                                     :encoding "UTF-8")] 
              (doseq [line (u/lines-as-seq lines)] 
-               (doto w
-                 (.write line)
-                 (.newLine))))
+               (doto w (.write line) (.newLine))))
            (catch Exception e (println e))))))
 
 (defn make-fn-save [{:keys [frame panel] :as ew}]
