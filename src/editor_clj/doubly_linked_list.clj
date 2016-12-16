@@ -78,7 +78,7 @@
 (defn dbl
   "Constructs a doubly-linked list, where s is a sequence to start off"
   [s]
-  (let [s (seq s)]
+  (let [s (into '() s)]
     (PersistentDoublyLL. (pop s)
                          '()
                          (peek s))))

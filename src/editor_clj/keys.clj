@@ -25,7 +25,6 @@
 (defn c-z [str-key] (buffer/undo!))
 (defn c-y [str-key] (buffer/redo!))
 (defn del [str-key] (buffer/delete))
-(defn quit [str-key] '(.close panel))
 (defn r [str-key] (buffer/righthward))
 (defn l [str-key] (buffer/leftward))
 (defn u [str-key] (buffer/upward))
@@ -37,14 +36,10 @@
 (def not-so-common-bindings
   {"ENTER" brk
    "BACK_SPACE" bsp
-   \space common-whatever
-   "control released Z" c-z
-   "control Z" c-z
-   "control released Y"c-y
+   \space common-whatever 
+   "control Z" c-z 
    "control Y" c-y
-   "control D" del
-   "control released D" del
-   "control released Q" quit 
+   "control D" del 
    "RIGHT" r
    "LEFT" l
    "UP" u

@@ -1,6 +1,7 @@
 (ns editor-clj.window
   (:require [editor-clj.buffer :as buffer]
             [editor-clj.utils :as u]
+            [editor-clj.doubly-linked-list :refer :all]
             [clojure.string :as str]
             [clojure.java.io :as io])
   (:import [java.io Writer FileWriter IOException]
@@ -95,13 +96,26 @@
 (defn save-file
   [parent lines]
   (let [jfc (JFileChooser.)]
-    (when (= (.showSaveDialog jfc parent) (JFileChooser/APPROVE_OPTION))
+    (when (= (.showSaveDialog jfc parent) JFileChooser/APPROVE_OPTION)
       (try (with-open [w (io/writer (.. jfc getSelectedFile getPath)
                                     :encoding "UTF-8")] 
              (doseq [line (u/lines-as-seq lines)] 
                (doto w (.write line) (.newLine))))
            (catch Exception e (println e))))))
 
+(defn open-file
+  [parent lines]
+  (let [jfc (JFileChooser.)]
+    (when (= (.showOpenDialog jfc parent) JFileChooser/APPROVE_OPTION)
+      (try (with-open [i (io/reader (.. jfc getSelectedFile getPath))] 
+             (buffer/set-editor! :lines (-> i line-seq dbl)))
+           (catch Exception e (println e))))))
+
+
 (defn make-fn-save [{:keys [frame panel] :as ew}]
   (fn [str-key] (save-file panel (:lines @buffer/editor-state))))
+(defn make-fn-open [{:keys [frame panel] :as ew}]
+  (fn [str-key]
+    (open-file panel (:lines @buffer/editor-state))
+    (.repaint panel)))
 

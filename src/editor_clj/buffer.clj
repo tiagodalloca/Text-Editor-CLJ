@@ -121,7 +121,7 @@
   (let [coln (get-editor :curr-coln)
         ln (get-editor :lines)
         curr (:curr ln)] 
-    (if (and (> coln 0) (> (.length curr) 0))
+    (if (< coln (.length curr))
       (update-in-editor! [:lines :curr] #(str-delete % coln))
       (when (pick-next ln)
         (update-editor! :lines #(merge-lines %))))))
