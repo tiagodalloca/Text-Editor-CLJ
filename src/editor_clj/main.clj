@@ -4,8 +4,7 @@
             [editor-clj.buffer :as b])
   (:gen-class))
 
-(defn -main
-  "I don't do a whole lot ... yet."
+(defn -main 
   [& args]
   (let [window (w/editor-window [800 600] b/editor-state
                                 (.getPath

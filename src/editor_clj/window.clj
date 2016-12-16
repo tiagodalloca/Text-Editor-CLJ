@@ -41,8 +41,9 @@
   (let [u-border 30
         l-border 30
         lw (.. g (getFontMetrics) (charWidth \space))
-        lh (.. g (getFontMetrics) (getHeight))]
-    (loop [seq-lines (u/lines-as-seq lines)
+        lh (.. g (getFontMetrics) (getHeight))
+        nrows  (int (/ h lh))]
+    (loop [seq-lines (u/slice-seq (u/lines-as-seq lines) (- (inc y) nrows) y)
            y u-border]
       (if (not-empty seq-lines)
         (do (.drawString g (first seq-lines) l-border y)
@@ -52,7 +53,8 @@
       (.setFont (Font. "Monospaced" Font/PLAIN 20)) 
       (.drawString "|"
                    (int (+ l-border (* (dec x) lw) (/ lw 2)))
-                   (+ u-border (* y lh))))))
+                   (let [cy (+ u-border (* y lh))]
+                     (if (< cy h) cy (int (* (+ 1/2 nrows) lh))))))))
 
 (defmacro editor-panel
   [buffer-atom]
@@ -115,6 +117,5 @@
   (fn [str-key] (save-file panel (:lines @buffer/editor-state))))
 (defn make-fn-open [{:keys [frame panel] :as ew}]
   (fn [str-key]
-    (open-file panel (:lines @buffer/editor-state))
-    (.repaint panel)))
+    (open-file panel (:lines @buffer/editor-state)) (.repaint panel)))
 

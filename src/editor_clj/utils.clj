@@ -17,6 +17,12 @@
   [s i]
   (str (subs s 0 i) (subs s (inc i) (.length s))))
 
+(defn slice-seq [seq start end]
+  (if (and (> start 0)
+           (>= (count seq) end start))
+    (->> seq (drop start) (take (inc (- end start))))
+    seq))
+
 (defn merge-lines
   "l is supposed to be a list of strings and the next line will be
   concatenated with the current one." 
