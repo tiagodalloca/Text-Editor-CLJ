@@ -107,8 +107,9 @@
   [parent lines]
   (let [jfc (JFileChooser.)]
     (when (= (.showOpenDialog jfc parent) JFileChooser/APPROVE_OPTION)
-      (try (with-open [i (io/reader (.. jfc getSelectedFile getPath))] 
-             (buffer/set-editor! :lines (-> i line-seq dbl)))
+      (try (with-open [i (io/reader (.. jfc getSelectedFile getPath)
+                                    :encoding "UTF-8")] 
+             (buffer/set-editor! :lines (-> i line-seq reverse dbl)))
            (catch Exception e (println e))))))
 
 

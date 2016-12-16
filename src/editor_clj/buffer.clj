@@ -172,10 +172,8 @@
         ln   (get-editor :lines)]
     (if (> coln 0)
       (update-editor! :curr-coln dec)
-      (when-let [pln (pick-next ln)]
+      (when-let [pln (pick-prev ln)]
         (do (update-editor! :lines #(backward %))
             (update-editor! :curr-row dec)
-            (set-editor! :curr-coln
-                         (-> (.length pln)
-                             (dec))))))))
+            (set-editor! :curr-coln (-> pln .length)))))))
 
