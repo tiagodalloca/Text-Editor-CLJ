@@ -73,10 +73,8 @@
   ([[w h :as dimensions] editor-state icon-path]
    (let [frame (JFrame.)
          panel (editor-panel editor-state)]
-     
-     (doto frame
-       (config-frame panel [w h])
-       (.setIconImage (ImageIcon. icon-path))) 
+     (config-frame frame [w h] panel)     
+     (.setIconImage frame (.getImage (ImageIcon. icon-path))) 
      (->EditorWindow frame panel)))
   ([[w h :as dimensions] editor-state]
    (let [frame (JFrame.)
