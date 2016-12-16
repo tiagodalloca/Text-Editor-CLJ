@@ -1,5 +1,4 @@
 (ns editor-clj.main
-  (:require [editor-clj.core :as c])
   (:import [jline.console ConsoleReader])
   (:gen-class))
 

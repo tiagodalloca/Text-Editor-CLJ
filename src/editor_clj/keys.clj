@@ -1,5 +1,6 @@
 (ns editor-clj.keys
-  (:require [editor-clj.buffer :as buffer]))
+  (:require [editor-clj.buffer :as buffer]
+            [editor-clj.window :as window]))
 
 (defn get-chars-map
   "Use it and see the magic"
@@ -23,6 +24,7 @@
 (defn bsp [str-key] (buffer/backspace))
 (defn c-z [str-key] (buffer/undo!))
 (defn del [str-key] (buffer/delete))
+(defn quit [str-key] '(.close panel))
 (defn r [str-key] (buffer/righthward))
 (defn l [str-key] (buffer/leftward))
 (defn u [str-key] (buffer/upward))
@@ -39,6 +41,7 @@
    "control Z" c-z
    "control D" del
    "control released D" del
+   "control released Q" quit 
    "RIGHT" r
    "LEFT" l
    "UP" u

@@ -1,7 +1,7 @@
 (ns user
   (:require [editor-clj.main :as m]
             [editor-clj.buffer :as b]
-            [editor-clj.core :as c] 
+            [editor-clj.window :as w] 
             [editor-clj.utils :as u]
             [editor-clj.keys :as k]
             [editor-clj.doubly-linked-list :refer :all]

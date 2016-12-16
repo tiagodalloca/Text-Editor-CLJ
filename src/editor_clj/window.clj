@@ -1,11 +1,14 @@
-(ns editor-clj.core
+(ns editor-clj.window
   (:require [editor-clj.buffer :as buffer]
             [editor-clj.utils :as u]
-            [clojure.string :as str])
-  (:import [javax.swing
+            [clojure.string :as str]
+            [clojure.java.io :as io])
+  (:import [java.io Writer FileWriter IOException]
+           [javax.swing
             JFrame
             JPanel
-            JComponent 
+            JComponent
+            JFileChooser
             KeyStroke
             AbstractAction
             ImageIcon]
@@ -16,17 +19,18 @@
            [java.awt
             Graphics
             Font
-            Color]))
+            Color] 
+           [java.nio.charset Charset]))
 
 (defn config-frame [frame w h panel]
   (doto frame
     (.setSize w h) 
     (.add panel)))
 
-(defn config-pane [panel w h key-bindings]
+(defn config-bindings [component key-bindings]
   (doseq [[k f] key-bindings
           :let [action-name (str k)]]
-    (doto panel
+    (doto component
       (.. (getInputMap)
           (put (KeyStroke/getKeyStroke k) action-name))
       (.. (getActionMap)
@@ -34,7 +38,7 @@
                (proxy [AbstractAction] []
                  (actionPerformed [e] 
                    (f (.getActionCommand e))
-                   (.repaint panel))))))))
+                   (.repaint component))))))))
 
 (defn hex-color [s]
   (letfn [(hexfy [i j] (Integer/valueOf (.substring s i j), 16))]
@@ -42,7 +46,7 @@
 
 (defn paint-editor [g w h lines [x y]]
   (doto g
-    (.setFont (Font. "Monospaced" Font/PLAIN 20))
+    (.setFont (Font. "Monospaced" Font/PLAIN 15))
     (.setColor (hex-color "#25333c"))
     (.fillRect 0 0 w h)
     (.setColor (hex-color "#FFFFFF")))
@@ -57,9 +61,9 @@
             (recur (drop 1 seq-lines) (+ y lh)))))
     (doto g
       (.setColor Color/ORANGE)
-      (.setFont (Font. "Monospaced" Font/PLAIN 23)) 
+      (.setFont (Font. "Monospaced" Font/PLAIN 20)) 
       (.drawString "|"
-                   (+ l-border (* (dec x) lw) (/ lw 2))
+                   (int (+ l-border (* (dec x) lw) (/ lw 2)))
                    (+ u-border (* y lh))))))
 
 (defmacro editor-panel
@@ -78,27 +82,44 @@
     [frame panel])
 
 (defn editor-window
-  ([[w h :as dimensions] editor-state key-bindings icon-path]
+  ([[w h :as dimensions] editor-state icon-path]
    (let [frame (JFrame.)
          panel (editor-panel editor-state)]
      
      (doto frame
        (config-frame panel w h)
-       (.setIconImage (ImageIcon. icon-path)))
-     (config-pane panel w h key-bindings)
+       (.setIconImage (ImageIcon. icon-path))) 
      (->EditorWindow frame panel)))
-  ([[w h :as dimensions] editor-state key-bindings]
+  ([[w h :as dimensions] editor-state]
    (let [frame (JFrame.)
          panel (editor-panel editor-state)] 
-     (config-pane panel w h key-bindings)
      (config-frame frame w h panel) 
      (->EditorWindow frame panel))))
 
+(defn config-window-bindings
+  [{:keys [frame panel] :as e-window} key-bindings]
+  (config-bindings panel key-bindings))
+
 (defn init-editor-window
-  [{:keys [frame panel] :as editor-window}]
+  [{:keys [frame panel] :as ew}]
   (doto frame
     (.show))
   (doto panel
     (.repaint)
     (.requestFocus)))
+
+(defn save-file
+  [parent lines]
+  (let [jfc (JFileChooser.)]
+    (when (= (.showSaveDialog jfc parent) (JFileChooser/APPROVE_OPTION))
+      (try (with-open [w (io/writer (.. jfc getSelectedFile getPath)
+                                    :encoding "UTF-8")] 
+             (doseq [line (u/lines-as-seq lines)] 
+               (doto w
+                 (.write line)
+                 (.newLine))))
+           (catch Exception e (println e))))))
+
+(defn make-fn-save [{:keys [frame panel] :as ew}]
+  (fn [str-key] (save-file panel (:lines @buffer/editor-state))))
 
