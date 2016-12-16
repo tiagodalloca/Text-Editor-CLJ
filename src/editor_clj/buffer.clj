@@ -1,8 +1,6 @@
 (ns editor-clj.buffer
   (:require [editor-clj.utils :refer :all]
-            [editor-clj.doubly-linked-list :refer :all])
-  (:import [jline.console ConsoleReader]
-           [java.util Stack]))
+            [editor-clj.doubly-linked-list :refer :all]))
 
 (def editor-state
   (atom {:lines nil
