@@ -10,9 +10,9 @@
                                 (.getPath
                                  (clojure.java.io/resource "icon-1.png")))]
     (b/start-writing!)
-    (w/config-window-bindings window (assoc k/all-bindings
-                                            "control released S"
-                                            (w/make-fn-save window)
-                                            "control released O"
-                                            (w/make-fn-open window)))
+    (w/config-window-bindings
+     window
+     (assoc k/all-bindings
+            "control released S" (w/make-fn-save window)
+            "control released O" (w/make-fn-open window)))
     (w/init-editor-window window)))

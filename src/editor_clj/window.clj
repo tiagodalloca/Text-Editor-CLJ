@@ -39,22 +39,34 @@
     (.fillRect 0 0 w h)
     (.setColor (hex-color "#FFFFFF")))
   (let [u-border 30
-        l-border 30
+        r-border 10
         lw (.. g (getFontMetrics) (charWidth \space))
         lh (.. g (getFontMetrics) (getHeight))
-        nrows  (int (/ h lh))]
+        w (- w lw)
+        nrows (int (/ h lh))
+        ncols (int (/ w lw))]
     (loop [seq-lines (u/slice-seq (u/lines-as-seq lines) (- (inc y) nrows) y)
-           y u-border]
+           y u-border] 
       (if (not-empty seq-lines)
-        (do (.drawString g (first seq-lines) l-border y)
-            (recur (drop 1 seq-lines) (+ y lh)))))
+        (do (.drawString g (if (>= (inc x) ncols)
+                             (let [l (first seq-lines)
+                                   ll (.length l)
+                                   x (inc x)]
+                               (.substring l
+                                           (- x ncols)
+                                           (if (> x ll)
+                                             ll x)))
+                             (first seq-lines))
+                         r-border y)
+            (recur (drop 1 seq-lines) (+ y lh))))) 
     (doto g
       (.setColor Color/ORANGE)
       (.setFont (Font. "Monospaced" Font/PLAIN 20)) 
-      (.drawString "|"
-                   (int (+ l-border (* (dec x) lw) (/ lw 2)))
-                   (let [cy (+ u-border (* y lh))]
-                     (if (< cy h) cy (int (* (+ 1/2 nrows) lh))))))))
+      (.drawString "|" 
+                   (let [cx (int (+ r-border (* (dec x) lw) (/ lw 2)))]
+                     (if (<= cx w) cx (int (- w (/ lw 2)))))
+                   (let [cy (+ u-border (* y lh))] 
+                     (if (< cy h) cy (int (- h (* 1/5 lh)))))))))
 
 (defmacro editor-panel
   [buffer-atom]
